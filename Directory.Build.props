@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <RestoreNoWarn>$(RestoreNoWarn);NU1900</RestoreNoWarn>
+  </PropertyGroup>
+</Project>

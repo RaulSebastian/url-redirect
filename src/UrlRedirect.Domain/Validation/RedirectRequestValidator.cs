@@ -45,11 +45,11 @@ public static partial class RedirectRequestValidator
         }
     }
 
-    public static string? NormalizeAlias(string? alias) =>
-        alias?.Trim().ToLowerInvariant();
+    public static string NormalizeAlias(string? alias) =>
+        (alias ?? string.Empty).Trim().ToLowerInvariant();
 
-    public static string? NormalizeTargetUrl(string? targetUrl) =>
-        targetUrl?.Trim();
+    public static string NormalizeTargetUrl(string? targetUrl) =>
+        (targetUrl ?? string.Empty).Trim();
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-_]{2,39}$", RegexOptions.CultureInvariant)]
     private static partial Regex AliasPattern();

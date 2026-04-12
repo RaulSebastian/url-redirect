@@ -91,6 +91,7 @@ flowchart TB
 ## 💡 Design Choices
 
 - Table Storage is the default persistence layer because the data model is simple and cost sensitive.
+- Azurite is the standard local development path so the app uses the real Table Storage code path without requiring Azure resources.
 - Redis stays optional so the platform can run cheaply at low traffic levels.
 - Front Door improves latency and reduces backend load for frequently used links.
 - Durable Functions are not required for the initial scope.
@@ -98,6 +99,7 @@ flowchart TB
 ## 📘 Documentation
 
 - V1 contract: [docs/v1-contract.md](docs/v1-contract.md)
+- Local development with Azurite: [docs/local-development.md](docs/local-development.md)
 
 ## 📦 Initial Boundaries
 
