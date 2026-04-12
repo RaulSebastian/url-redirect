@@ -83,10 +83,11 @@ flowchart TB
 ### 🚀 Redirect flow
 
 1. A visitor opens the redirect URL.
-2. Azure Front Door receives the request and serves cached responses when possible.
-3. On cache miss, Azure Functions resolves the alias.
-4. The function reads from Redis when enabled, otherwise from Table Storage.
-5. The function returns the redirect response to the visitor.
+2. In local or server-hosted runs, the ASP.NET web host can resolve `/{alias}` directly against the shared repository.
+3. In the target Azure deployment, Azure Front Door receives the request and serves cached responses when possible.
+4. On cache miss, Azure Functions resolves the alias.
+5. The function reads from Redis when enabled, otherwise from Table Storage.
+6. The platform returns the redirect response to the visitor.
 
 ## 💡 Design Choices
 
