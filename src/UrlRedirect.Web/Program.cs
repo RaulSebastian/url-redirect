@@ -64,3 +64,5 @@ app.MapPost("/api/redirects", async (
 app.MapRazorPages();
 
 app.Run();
+
+public partial class Program;

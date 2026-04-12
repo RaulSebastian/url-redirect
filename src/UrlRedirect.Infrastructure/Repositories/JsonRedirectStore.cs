@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using UrlRedirect.Domain.Model;
 using UrlRedirect.Domain.Repositories;
@@ -15,11 +16,15 @@ public sealed class JsonRedirectStore : IRedirectRepository
     private readonly SemaphoreSlim _mutex = new(1, 1);
     private readonly string _storagePath;
 
-    public JsonRedirectStore(IHostEnvironment environment)
+    public JsonRedirectStore(IHostEnvironment environment, IConfiguration configuration)
     {
-        var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
+        _storagePath = configuration["RedirectStorage:JsonPath"]
+            ?? Path.Combine(environment.ContentRootPath, "App_Data", "redirects.json");
+
+        var dataDirectory = Path.GetDirectoryName(_storagePath)
+            ?? throw new InvalidOperationException("A storage path with a directory is required.");
+
         Directory.CreateDirectory(dataDirectory);
-        _storagePath = Path.Combine(dataDirectory, "redirects.json");
     }
 
     public async Task<bool> TryCreateAsync(Redirect redirect, CancellationToken cancellationToken)
