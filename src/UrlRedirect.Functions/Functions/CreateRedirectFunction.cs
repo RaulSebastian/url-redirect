@@ -37,10 +37,13 @@ public sealed class CreateRedirectFunction
                 cancellationToken);
         }
 
-        input.Alias = RedirectRequestValidator.NormalizeAlias(input.Alias);
-        input.TargetUrl = RedirectRequestValidator.NormalizeTargetUrl(input.TargetUrl);
+        var alias = RedirectRequestValidator.NormalizeAlias(input.Alias ?? string.Empty);
+        var targetUrl = RedirectRequestValidator.NormalizeTargetUrl(input.TargetUrl ?? string.Empty);
 
-        var validationErrors = RedirectRequestValidator.Validate(input.Alias, input.TargetUrl);
+        input.Alias = alias;
+        input.TargetUrl = targetUrl;
+
+        var validationErrors = RedirectRequestValidator.Validate(alias, targetUrl);
 
         if (validationErrors.Count > 0)
         {
@@ -55,7 +58,7 @@ public sealed class CreateRedirectFunction
         }
 
         var created = await _redirectRepository.TryCreateAsync(
-            new Redirect(input.Alias, input.TargetUrl, DateTime.UtcNow),
+            new Redirect(alias, targetUrl, DateTime.UtcNow),
             cancellationToken);
 
         if (!created)
@@ -72,9 +75,9 @@ public sealed class CreateRedirectFunction
 
         var shortUrl = new Uri(request.Url, $"/{input.Alias}").ToString();
         var response = new CreateRedirectResponse(
-            input.Alias,
+            alias,
             shortUrl,
-            input.TargetUrl,
+            targetUrl,
             (int)HttpStatusCode.Found);
 
         var createdResponse = request.CreateResponse(HttpStatusCode.Created);

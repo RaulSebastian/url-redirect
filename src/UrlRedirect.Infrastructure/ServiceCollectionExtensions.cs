@@ -14,18 +14,13 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        if (environment.IsDevelopment())
-        {
-            services.AddSingleton<IRedirectRepository, JsonRedirectStore>();
-            return services;
-        }
-
         services.AddSingleton(serviceProvider =>
         {
             var connectionString = configuration.GetConnectionString("RedirectStorage")
                 ?? configuration["RedirectStorage:ConnectionString"]
+                ?? configuration["AzureWebJobsStorage"]
                 ?? throw new InvalidOperationException(
-                    "Redirect storage connection string is not configured. Set ConnectionStrings:RedirectStorage or RedirectStorage:ConnectionString.");
+                    "Redirect storage connection string is not configured. Set ConnectionStrings:RedirectStorage, RedirectStorage:ConnectionString, or AzureWebJobsStorage.");
 
             var tableName = configuration["RedirectStorage:TableName"] ?? "redirects";
             var tableClient = new TableClient(connectionString, tableName);
