@@ -48,6 +48,10 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+# JetBrains IDE files
+.idea/
+*.iml
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
