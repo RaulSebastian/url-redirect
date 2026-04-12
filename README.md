@@ -97,7 +97,7 @@ flowchart TB
 
 ## 📘 Documentation
 
-- V1 contract: [docs/v1-contract.md](/Users/raulschnelzer/src/personal/url-redirect/docs/v1-contract.md)
+- V1 contract: [docs/v1-contract.md](docs/v1-contract.md)
 
 ## 📦 Initial Boundaries
 
