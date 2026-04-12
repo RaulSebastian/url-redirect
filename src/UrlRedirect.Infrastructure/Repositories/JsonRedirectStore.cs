@@ -1,8 +1,9 @@
 using System.Text.Json;
+using Microsoft.Extensions.Hosting;
 using UrlRedirect.Domain.Model;
 using UrlRedirect.Domain.Repositories;
 
-namespace UrlRedirect.Web.Services;
+namespace UrlRedirect.Infrastructure.Repositories;
 
 public sealed class JsonRedirectStore : IRedirectRepository
 {
@@ -14,7 +15,7 @@ public sealed class JsonRedirectStore : IRedirectRepository
     private readonly SemaphoreSlim _mutex = new(1, 1);
     private readonly string _storagePath;
 
-    public JsonRedirectStore(IWebHostEnvironment environment)
+    public JsonRedirectStore(IHostEnvironment environment)
     {
         var dataDirectory = Path.Combine(environment.ContentRootPath, "App_Data");
         Directory.CreateDirectory(dataDirectory);
@@ -29,12 +30,10 @@ public sealed class JsonRedirectStore : IRedirectRepository
         {
             var redirects = await ReadAllAsync(cancellationToken);
 
-            if (redirects.ContainsKey(redirect.Alias))
+            if (!redirects.TryAdd(redirect.Alias, redirect))
             {
                 return false;
             }
-
-            redirects[redirect.Alias] = redirect;
 
             await using var stream = File.Create(_storagePath);
             await JsonSerializer.SerializeAsync(stream, redirects, SerializerOptions, cancellationToken);

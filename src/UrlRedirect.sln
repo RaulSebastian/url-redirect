@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlRedirect.Web", "UrlRedir
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlRedirect.Domain", "UrlRedirect.Domain\UrlRedirect.Domain.csproj", "{93D341BC-DEB8-4F27-A8FA-9F3FF13FE15D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UrlRedirect.Infrastructure", "UrlRedirect.Infrastructure\UrlRedirect.Infrastructure.csproj", "{0B421C30-EA88-465A-A459-9CD19E61FF25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{93D341BC-DEB8-4F27-A8FA-9F3FF13FE15D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93D341BC-DEB8-4F27-A8FA-9F3FF13FE15D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93D341BC-DEB8-4F27-A8FA-9F3FF13FE15D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B421C30-EA88-465A-A459-9CD19E61FF25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B421C30-EA88-465A-A459-9CD19E61FF25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B421C30-EA88-465A-A459-9CD19E61FF25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B421C30-EA88-465A-A459-9CD19E61FF25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

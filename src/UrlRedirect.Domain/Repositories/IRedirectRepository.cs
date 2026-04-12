@@ -6,4 +6,3 @@ public interface IRedirectRepository
 {
     Task<bool> TryCreateAsync(Redirect redirect, CancellationToken cancellationToken);
 }
- 

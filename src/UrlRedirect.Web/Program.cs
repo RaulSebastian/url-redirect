@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using UrlRedirect.Domain.Model;
 using UrlRedirect.Domain.Repositories;
+using UrlRedirect.Infrastructure;
 using UrlRedirect.Web.Models;
 using UrlRedirect.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
-builder.Services.AddSingleton<IRedirectRepository, JsonRedirectStore>();
+builder.Services.AddRedirectInfrastructure(builder.Configuration, builder.Environment);
 
 var app = builder.Build();
 

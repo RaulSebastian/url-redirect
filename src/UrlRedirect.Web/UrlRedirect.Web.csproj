@@ -6,5 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\UrlRedirect.Domain\UrlRedirect.Domain.csproj" />
+    <ProjectReference Include="..\UrlRedirect.Infrastructure\UrlRedirect.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
