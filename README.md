@@ -95,6 +95,10 @@ flowchart TB
 - Front Door improves latency and reduces backend load for frequently used links.
 - Durable Functions are not required for the initial scope.
 
+## 📘 Documentation
+
+- V1 contract: [docs/v1-contract.md](/Users/raulschnelzer/src/personal/url-redirect/docs/v1-contract.md)
+
 ## 📦 Initial Boundaries
 
 This first version focuses on redirect creation and fast redirect delivery.
