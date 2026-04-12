@@ -7,9 +7,12 @@ public static class CreateRedirectRequestValidator
 {
     public static IReadOnlyDictionary<string, string[]> Validate(CreateRedirectRequest request)
     {
-        request.Alias = RedirectRequestValidator.NormalizeAlias(request.Alias);
-        request.TargetUrl = RedirectRequestValidator.NormalizeTargetUrl(request.TargetUrl);
+        var alias = RedirectRequestValidator.NormalizeAlias(request.Alias ?? string.Empty);
+        var targetUrl = RedirectRequestValidator.NormalizeTargetUrl(request.TargetUrl ?? string.Empty);
 
-        return RedirectRequestValidator.Validate(request.Alias, request.TargetUrl);
+        request.Alias = alias;
+        request.TargetUrl = targetUrl;
+
+        return RedirectRequestValidator.Validate(alias, targetUrl);
     }
 }
