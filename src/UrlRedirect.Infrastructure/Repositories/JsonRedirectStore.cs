@@ -51,6 +51,21 @@ public sealed class JsonRedirectStore : IRedirectRepository
         }
     }
 
+    public async Task<Redirect?> GetByAliasAsync(string alias, CancellationToken cancellationToken)
+    {
+        await _mutex.WaitAsync(cancellationToken);
+
+        try
+        {
+            var redirects = await ReadAllAsync(cancellationToken);
+            return redirects.GetValueOrDefault(alias);
+        }
+        finally
+        {
+            _mutex.Release();
+        }
+    }
+
     private async Task<Dictionary<string, Redirect>> ReadAllAsync(CancellationToken cancellationToken)
     {
         if (!File.Exists(_storagePath))

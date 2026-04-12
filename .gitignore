@@ -229,6 +229,7 @@ PublishScripts/
 # Microsoft Azure Build Output
 csx/
 *.build.csdef
+**/local.settings.json
 
 # Microsoft Azure Emulator
 ecf/

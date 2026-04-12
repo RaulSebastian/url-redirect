@@ -19,34 +19,35 @@
         <h2>New redirect</h2>
     </div>
 
-    <form method="post" class="redirect-form" novalidate>
-        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <form id="redirect-form" class="redirect-form" novalidate>
+        <div id="validation-summary" class="validation-summary" hidden></div>
 
         <div class="field">
-            <label asp-for="Input.Alias"></label>
-            <input asp-for="Input.Alias" autocomplete="off" placeholder="summer-sale" />
+            <label for="alias">Custom alias</label>
+            <input id="alias" name="alias" autocomplete="off" placeholder="summer-sale" pattern="^[a-z0-9][a-z0-9-_]{2,39}$" required />
             <small>Use 3 to 40 lowercase characters with letters, numbers, hyphens, or underscores.</small>
-            <span asp-validation-for="Input.Alias" class="field-error"></span>
+            <span id="alias-error" class="field-error"></span>
         </div>
 
         <div class="field">
-            <label asp-for="Input.TargetUrl"></label>
-            <input asp-for="Input.TargetUrl" autocomplete="off" placeholder="https://example.com/campaign" />
+            <label for="target-url">Target URL</label>
+            <input id="target-url" name="targetUrl" type="url" autocomplete="off" placeholder="https://example.com/campaign" required />
             <small>Only valid absolute URLs are accepted.</small>
-            <span asp-validation-for="Input.TargetUrl" class="field-error"></span>
+            <span id="target-url-error" class="field-error"></span>
         </div>
 
-        <button type="submit" class="primary-button">Create redirect</button>
+        <button type="submit" id="submit-button" class="primary-button">Create redirect</button>
     </form>
 
-    @if (!string.IsNullOrWhiteSpace(Model.CreatedRedirectUrl))
-    {
-        <section class="result-card" aria-live="polite">
-            <p class="result-label">Redirect created</p>
-            <a href="@Model.CreatedRedirectUrl" class="result-url">@Model.CreatedRedirectUrl</a>
-            <p class="result-note">
-                The redirect has been validated and persisted by the backend.
-            </p>
-        </section>
-    }
+    <section id="result-card" class="result-card" aria-live="polite" hidden>
+        <p class="result-label">Redirect created</p>
+        <a id="result-url" href="#" class="result-url"></a>
+        <p class="result-note">
+            The redirect has been validated and persisted by the backend.
+        </p>
+    </section>
 </section>
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
+}
