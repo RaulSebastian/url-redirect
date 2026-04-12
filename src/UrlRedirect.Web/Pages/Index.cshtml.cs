@@ -1,11 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using UrlRedirect.Domain.Model;
+using UrlRedirect.Domain.Repositories;
 using UrlRedirect.Web.Models;
+using UrlRedirect.Web.Services;
 
 namespace UrlRedirect.Web.Pages;
 
 public sealed class IndexModel : PageModel
 {
+    private readonly IRedirectRepository _redirectRepository;
+
+    public IndexModel(IRedirectRepository redirectRepository)
+    {
+        _redirectRepository = redirectRepository;
+    }
+
     [BindProperty]
     public CreateRedirectInput Input { get; set; } = new();
 
@@ -15,18 +25,37 @@ public sealed class IndexModel : PageModel
     {
     }
 
-    public void OnPost()
+    public async Task OnPostAsync(CancellationToken cancellationToken)
     {
-        Input.Alias = Input.Alias.Trim().ToLowerInvariant();
-        Input.TargetUrl = Input.TargetUrl.Trim();
+        var validationErrors = CreateRedirectRequestValidator.Validate(Input);
 
-        if (!Uri.TryCreate(Input.TargetUrl, UriKind.Absolute, out _))
+        foreach (var validationError in validationErrors)
         {
-            ModelState.AddModelError("Input.TargetUrl", "Enter a valid absolute URL.");
+            var modelKey = string.IsNullOrEmpty(validationError.Key)
+                ? string.Empty
+                : $"Input.{validationError.Key}";
+
+            foreach (var message in validationError.Value)
+            {
+                ModelState.AddModelError(modelKey, message);
+            }
         }
 
         if (!ModelState.IsValid)
         {
+            return;
+        }
+
+        var created = await _redirectRepository.TryCreateAsync(
+            new Redirect(
+                Input.Alias,
+                Input.TargetUrl,
+                DateTime.UtcNow),
+            cancellationToken);
+
+        if (!created)
+        {
+            ModelState.AddModelError("Input.Alias", "That alias is already in use.");
             return;
         }
 
