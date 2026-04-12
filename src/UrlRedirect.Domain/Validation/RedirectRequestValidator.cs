@@ -14,6 +14,10 @@ public static partial class RedirectRequestValidator
         {
             AddError("Alias", "The Custom alias field is required.");
         }
+        else if (ReservedAliases.Contains(normalizedAlias))
+        {
+            AddError("Alias", $"The alias '{normalizedAlias}' is reserved.");
+        }
         else if (!AliasPattern().IsMatch(normalizedAlias))
         {
             AddError("Alias", "Use 3 to 40 lowercase characters with letters, numbers, hyphens, or underscores.");
@@ -50,6 +54,12 @@ public static partial class RedirectRequestValidator
 
     public static string NormalizeTargetUrl(string? targetUrl) =>
         (targetUrl ?? string.Empty).Trim();
+
+    private static readonly HashSet<string> ReservedAliases = new(StringComparer.Ordinal)
+    {
+        "api",
+        "ui"
+    };
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-_]{2,39}$", RegexOptions.CultureInvariant)]
     private static partial Regex AliasPattern();
