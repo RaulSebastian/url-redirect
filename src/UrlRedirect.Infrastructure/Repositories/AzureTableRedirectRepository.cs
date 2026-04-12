@@ -41,4 +41,24 @@ public sealed class AzureTableRedirectRepository : IRedirectRepository
             return false;
         }
     }
+
+    public async Task<Redirect?> GetByAliasAsync(string alias, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _tableClient.GetEntityAsync<TableRedirectEntity>(
+                PartitionKey,
+                alias,
+                cancellationToken: cancellationToken);
+
+            return new Redirect(
+                response.Value.RowKey,
+                response.Value.TargetUrl,
+                response.Value.CreatedUtc);
+        }
+        catch (RequestFailedException exception) when (exception.Status == 404)
+        {
+            return null;
+        }
+    }
 }
