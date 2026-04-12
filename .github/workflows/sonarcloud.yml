@@ -26,6 +26,6 @@ jobs:
       with:
         args: >
           -Dsonar.projectKey=RaulSebastian_url-redirect
-          -Dsonar.organization=raulsebastian
+          -Dsonar.organization=raulsebastian-github
           -Dsonar.sources=src/UrlRedirect.Web
         projectBaseDir: .
