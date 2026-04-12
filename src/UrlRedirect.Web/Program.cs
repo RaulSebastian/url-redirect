@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
+using UrlRedirect.Domain.Model;
+using UrlRedirect.Domain.Repositories;
 using UrlRedirect.Web.Models;
 using UrlRedirect.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
-builder.Services.AddSingleton<IRedirectStore, JsonRedirectStore>();
+builder.Services.AddSingleton<IRedirectRepository, JsonRedirectStore>();
 
 var app = builder.Build();
 
@@ -23,7 +25,7 @@ app.UseRouting();
 app.MapPost("/api/redirects", async (
     [FromBody] CreateRedirectInput input,
     HttpContext httpContext,
-    IRedirectStore redirectStore,
+    IRedirectRepository redirectRepository,
     CancellationToken cancellationToken) =>
 {
     var validationErrors = CreateRedirectRequestValidator.Validate(input);
@@ -33,12 +35,12 @@ app.MapPost("/api/redirects", async (
         return Results.ValidationProblem(validationErrors, statusCode: StatusCodes.Status400BadRequest);
     }
 
-    var record = new RedirectRecord(
+    var record = new Redirect(
         input.Alias,
         input.TargetUrl,
         DateTime.UtcNow);
 
-    var created = await redirectStore.TryCreateAsync(record, cancellationToken);
+    var created = await redirectRepository.TryCreateAsync(record, cancellationToken);
 
     if (!created)
     {

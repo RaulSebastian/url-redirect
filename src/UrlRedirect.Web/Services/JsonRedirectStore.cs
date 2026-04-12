@@ -1,9 +1,10 @@
 using System.Text.Json;
-using UrlRedirect.Web.Models;
+using UrlRedirect.Domain.Model;
+using UrlRedirect.Domain.Repositories;
 
 namespace UrlRedirect.Web.Services;
 
-public sealed class JsonRedirectStore : IRedirectStore
+public sealed class JsonRedirectStore : IRedirectRepository
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -20,7 +21,7 @@ public sealed class JsonRedirectStore : IRedirectStore
         _storagePath = Path.Combine(dataDirectory, "redirects.json");
     }
 
-    public async Task<bool> TryCreateAsync(RedirectRecord record, CancellationToken cancellationToken)
+    public async Task<bool> TryCreateAsync(Redirect redirect, CancellationToken cancellationToken)
     {
         await _mutex.WaitAsync(cancellationToken);
 
@@ -28,12 +29,12 @@ public sealed class JsonRedirectStore : IRedirectStore
         {
             var redirects = await ReadAllAsync(cancellationToken);
 
-            if (redirects.ContainsKey(record.Alias))
+            if (redirects.ContainsKey(redirect.Alias))
             {
                 return false;
             }
 
-            redirects[record.Alias] = record;
+            redirects[redirect.Alias] = redirect;
 
             await using var stream = File.Create(_storagePath);
             await JsonSerializer.SerializeAsync(stream, redirects, SerializerOptions, cancellationToken);
@@ -46,19 +47,19 @@ public sealed class JsonRedirectStore : IRedirectStore
         }
     }
 
-    private async Task<Dictionary<string, RedirectRecord>> ReadAllAsync(CancellationToken cancellationToken)
+    private async Task<Dictionary<string, Redirect>> ReadAllAsync(CancellationToken cancellationToken)
     {
         if (!File.Exists(_storagePath))
         {
-            return new Dictionary<string, RedirectRecord>(StringComparer.Ordinal);
+            return new Dictionary<string, Redirect>(StringComparer.Ordinal);
         }
 
         await using var stream = File.OpenRead(_storagePath);
-        var redirects = await JsonSerializer.DeserializeAsync<Dictionary<string, RedirectRecord>>(
+        var redirects = await JsonSerializer.DeserializeAsync<Dictionary<string, Redirect>>(
             stream,
             SerializerOptions,
             cancellationToken);
 
-        return redirects ?? new Dictionary<string, RedirectRecord>(StringComparer.Ordinal);
+        return redirects ?? new Dictionary<string, Redirect>(StringComparer.Ordinal);
     }
 }

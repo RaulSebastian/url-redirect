@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using UrlRedirect.Domain.Model;
+using UrlRedirect.Domain.Repositories;
 using UrlRedirect.Web.Models;
 using UrlRedirect.Web.Services;
 
@@ -7,11 +9,11 @@ namespace UrlRedirect.Web.Pages;
 
 public sealed class IndexModel : PageModel
 {
-    private readonly IRedirectStore _redirectStore;
+    private readonly IRedirectRepository _redirectRepository;
 
-    public IndexModel(IRedirectStore redirectStore)
+    public IndexModel(IRedirectRepository redirectRepository)
     {
-        _redirectStore = redirectStore;
+        _redirectRepository = redirectRepository;
     }
 
     [BindProperty]
@@ -44,8 +46,8 @@ public sealed class IndexModel : PageModel
             return;
         }
 
-        var created = await _redirectStore.TryCreateAsync(
-            new RedirectRecord(
+        var created = await _redirectRepository.TryCreateAsync(
+            new Redirect(
                 Input.Alias,
                 Input.TargetUrl,
                 DateTime.UtcNow),
