@@ -17,7 +17,7 @@ Anyone who opens that redirect URL is sent to the configured target URL through 
 
 ## 🎯 Functional Goals
 
-- Allow users to create redirects through an ASP.NET frontend hosted as a stateless Azure Static Web App
+- Allow users to create redirects through an ASP.NET frontend hosted under `/ui` in Azure Static Web Apps
 - Support custom aliases
 - Validate alias and target URL input
 - Return the final redirect URL immediately after creation
@@ -38,17 +38,18 @@ The solution is built from a small set of Azure services:
 
 ```mermaid
 flowchart LR
-    A["User opens root web address"] --> B["ASP.NET frontend in Azure Static Web Apps"]
-    B --> C["User enters custom alias and target URL"]
-    C --> D["Basic validation runs in the frontend and backend"]
-    D --> E["Azure Function stores alias mapping"]
-    E --> F["Azure Table Storage persists redirect"]
-    E --> G["User receives redirect URL"]
-    H["Visitor opens redirect URL"] --> I["Azure Front Door"]
-    I --> J["Redirect lookup function resolves alias"]
-    J --> K["Redis cache when enabled"]
-    J --> L["Azure Table Storage when cache is disabled or missed"]
-    J --> M["HTTP redirect to target URL"]
+    A["User opens go.example.com"] --> B["Azure Front Door redirects to /ui"]
+    B --> C["ASP.NET frontend in Azure Static Web Apps"]
+    C --> D["User enters custom alias and target URL"]
+    D --> E["Basic validation runs in the frontend and backend"]
+    E --> F["Azure Function stores alias mapping"]
+    F --> G["Azure Table Storage persists redirect"]
+    F --> H["User receives redirect URL"]
+    I["Visitor opens go.example.com/alias"] --> J["Azure Front Door"]
+    J --> K["Redirect lookup function resolves alias"]
+    K --> L["Redis cache when enabled"]
+    K --> M["Azure Table Storage when cache is disabled or missed"]
+    K --> N["HTTP redirect to target URL"]
 ```
 
 ### Solution Architecture Diagram
@@ -75,17 +76,18 @@ flowchart TB
 ### 📝 Create flow
 
 1. The user opens the root web address.
-2. The frontend shows a form with alias and target URL fields.
-3. Basic validation checks that the alias is allowed and that the target is a valid URL.
-4. The frontend calls a backend function to store the redirect definition.
-5. The system returns the final redirect URL to the user.
+2. Azure Front Door redirects `/` to `/ui`.
+3. The frontend shows a form with alias and target URL fields.
+4. Basic validation checks that the alias is allowed and that the target is a valid URL.
+5. The frontend calls a backend function to store the redirect definition.
+6. The system returns the final redirect URL to the user.
 
 ### 🚀 Redirect flow
 
-1. A visitor opens the redirect URL.
+1. A visitor opens the redirect URL at `/{alias}`.
 2. In local or server-hosted runs, the ASP.NET web host can resolve `/{alias}` directly against the shared repository.
-3. In the target Azure deployment, Azure Front Door receives the request and serves cached responses when possible.
-4. On cache miss, Azure Functions resolves the alias.
+3. In the target Azure deployment, Azure Front Door sends `/ui` and `/ui/assets/*` to Static Web Apps, `/api/*` to Azure Functions, and the remaining root paths to redirect lookup.
+4. Azure Functions resolves the alias on cache miss or direct lookup.
 5. The function reads from Redis when enabled, otherwise from Table Storage.
 6. The platform returns the redirect response to the visitor.
 
@@ -95,6 +97,7 @@ flowchart TB
 - Azurite is the standard local development path so the app uses the real Table Storage code path without requiring Azure resources.
 - Redis stays optional so the platform can run cheaply at low traffic levels.
 - Front Door improves latency and reduces backend load for frequently used links.
+- The create UI lives under `/ui` so alias routes can stay clean at the root hostname.
 - Durable Functions are not required for the initial scope.
 
 ## 📘 Documentation

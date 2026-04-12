@@ -43,6 +43,14 @@ That means the default repository path stays on Azure Table Storage locally, wit
 
 With Azurite running, you can start the solution normally. The backend will create the configured redirects table automatically on first use.
 
+The local web UI is served from:
+
+```text
+/ui
+```
+
+The root path `/` redirects to `/ui`, while alias lookups still use `/{alias}`.
+
 If you want to use the Functions app directly:
 
 ```powershell

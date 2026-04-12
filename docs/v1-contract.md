@@ -19,6 +19,7 @@ Rules:
 - `targetUrl` is required.
 - Leading and trailing whitespace is trimmed before validation.
 - The canonical alias is always lowercase.
+- Reserved aliases such as `ui` and `api` are rejected.
 
 ## Alias Rules
 
@@ -27,6 +28,7 @@ Rules:
 - The first character must be a lowercase letter or digit.
 - Aliases are normalized to lowercase before persistence and comparison.
 - Slashes, dots, spaces, query strings, fragments, and other symbols are not allowed.
+- `ui` and `api` are reserved and cannot be created as aliases.
 
 ## Duplicate Alias Behavior
 
@@ -62,6 +64,14 @@ When a visitor opens `/{alias}`:
 - The system looks up the redirect by the normalized alias.
 - If found, the system returns an HTTP redirect to `targetUrl`.
 - If not found, the system returns `404 Not Found`.
+
+## Frontend Route Behavior
+
+- The create UI is hosted at `/ui`.
+- Front Door should redirect `/` to `/ui`.
+- Frontend assets are served from `/ui/assets/*`.
+- Create requests are sent to `/api/redirects`.
+- Root paths other than reserved UI/API paths are treated as redirect aliases.
 
 ## Storage Record Shape
 
