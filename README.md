@@ -11,8 +11,6 @@ A user opens the main web address and creates a new redirect by entering:
 1. A custom alias
 2. A target URL
 
-Both fields are validated with basic rules before the redirect is created.
-
 After a successful submission, the user receives a redirect URL such as `https://go.example.com/my-alias`.
 
 Anyone who opens that redirect URL is sent to the configured target URL through a fast and cost conscious redirect path.
@@ -57,15 +55,13 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    U["User or Visitor"]
     FD["Azure Front Door"]
-    SWA["Azure Static Web Apps<br/>ASP.NET frontend"]
+    SWA["Azure Static Web Apps frontend"]
     FUNC["Azure Functions"]
     TABLE["Azure Table Storage"]
     REDIS["Azure Cache for Redis<br/>Optional"]
     TARGET["Target destination URL"]
 
-    U --> FD
     FD --> SWA
     FD --> FUNC
     SWA --> FUNC
