@@ -17,6 +17,12 @@ From the repository root, start the checked-in Azurite service:
 docker compose -f compose.azurite.yml up -d
 ```
 
+On macOS or Linux:
+
+```bash
+docker compose -f compose.azurite.yml up -d
+```
+
 Azurite exposes the default local Azure Storage ports:
 
 - Blob: `10000`
@@ -58,6 +64,13 @@ cd src/UrlRedirect.Functions
 func start
 ```
 
+On macOS or Linux:
+
+```bash
+cd src/UrlRedirect.Functions
+func start
+```
+
 ## Run Integration Tests
 
 The Azure Table integration tests use Azurite as well, so keep the emulator running and then execute:
@@ -66,10 +79,22 @@ The Azure Table integration tests use Azurite as well, so keep the emulator runn
 dotnet test src/UrlRedirect.sln /p:RestoreIgnoreFailedSources=true
 ```
 
+On macOS or Linux:
+
+```bash
+dotnet test src/UrlRedirect.sln /p:RestoreIgnoreFailedSources=true
+```
+
 If Azurite is not running, the integration test class skips itself with a message telling you how to start the emulator.
 
 ## Stop Azurite
 
 ```powershell
+docker compose -f compose.azurite.yml down
+```
+
+On macOS or Linux:
+
+```bash
 docker compose -f compose.azurite.yml down
 ```
