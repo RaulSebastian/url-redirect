@@ -1,5 +1,12 @@
 using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using UrlRedirect.Domain.Model;
+using UrlRedirect.Domain.Repositories;
 using Xunit;
 
 namespace UrlRedirect.Web.Tests;
@@ -42,5 +49,95 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Contains("Create redirect", html);
         Assert.Contains("/ui/assets/site.js", html);
         Assert.Contains("/api/redirects", script);
+    }
+
+    [Fact]
+    public async Task CreateRedirect_ReturnsCreatedWithShortUrl()
+    {
+        using var factory = _factory.WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository());
+        });
+
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/redirects", new { alias = "summer-sale", targetUrl = "https://example.com/campaign" });
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.True(body.StartsWith("{"), $"Expected JSON body, got: {body[..Math.Min(200, body.Length)]}");
+        var payload = JsonDocument.Parse(body).RootElement;
+        Assert.Equal("summer-sale", payload.GetProperty("alias").GetString());
+        Assert.Equal("https://example.com/campaign", payload.GetProperty("targetUrl").GetString());
+        Assert.EndsWith("/summer-sale", payload.GetProperty("shortUrl").GetString());
+        Assert.Equal(302, payload.GetProperty("statusCode").GetInt32());
+    }
+
+    [Fact]
+    public async Task CreateRedirect_InvalidAlias_ReturnsBadRequestWithErrors()
+    {
+        using var factory = _factory.WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository());
+        });
+
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/redirects", new { alias = "ui", targetUrl = "https://example.com" });
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True(body.StartsWith("{"), $"Expected JSON body, got: {body[..Math.Min(200, body.Length)]}");
+        var payload = JsonDocument.Parse(body).RootElement;
+        Assert.True(payload.TryGetProperty("errors", out _));
+    }
+
+    [Fact]
+    public async Task CreateRedirect_DuplicateAlias_ReturnsConflict()
+    {
+        var repository = new CreateTestRepository(new Redirect("summer-sale", "https://example.com/campaign", DateTime.UtcNow));
+
+        using var factory = _factory.WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(repository);
+        });
+
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/redirects", new { alias = "summer-sale", targetUrl = "https://example.com/other" });
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.True(body.StartsWith("{"), $"Expected JSON body, got: {body[..Math.Min(200, body.Length)]}");
+        var payload = JsonDocument.Parse(body).RootElement;
+        Assert.True(payload.TryGetProperty("message", out _));
+    }
+
+    private sealed class CreateTestRepository : IRedirectRepository
+    {
+        private readonly Dictionary<string, Redirect> _redirects;
+
+        public CreateTestRepository(params Redirect[] existing)
+        {
+            _redirects = existing.ToDictionary(r => r.Alias, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public Task<bool> TryCreateAsync(Redirect redirect, CancellationToken cancellationToken)
+        {
+            if (_redirects.ContainsKey(redirect.Alias))
+                return Task.FromResult(false);
+
+            _redirects[redirect.Alias] = redirect;
+            return Task.FromResult(true);
+        }
+
+        public Task<Redirect?> GetByAliasAsync(string alias, CancellationToken cancellationToken)
+        {
+            _redirects.TryGetValue(alias, out var redirect);
+            return Task.FromResult(redirect);
+        }
     }
 }
