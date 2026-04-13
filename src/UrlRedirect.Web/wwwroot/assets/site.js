@@ -133,8 +133,7 @@
                 return;
             }
 
-            const message = payload.message ?? "The redirect could not be created.";
-            validationSummary.textContent = message;
+            validationSummary.textContent = payload.message ?? "The redirect could not be created.";
             validationSummary.hidden = false;
         } finally {
             submitButton.disabled = false;

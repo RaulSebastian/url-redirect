@@ -17,7 +17,7 @@ Anyone who opens that redirect URL is sent to the configured target URL through 
 
 ## 🎯 Functional Goals
 
-- Allow users to create redirects through an ASP.NET frontend hosted under `/ui` in Azure Static Web Apps
+- Allow users to create redirects through an ASP.NET frontend hosted under `/ui` in Azure App Service
 - Support custom aliases
 - Validate alias and target URL input
 - Return the final redirect URL immediately after creation
@@ -28,18 +28,17 @@ Anyone who opens that redirect URL is sent to the configured target URL through 
 
 The solution is built from a small set of Azure services:
 
-- 🌐 **ASP.NET frontend** hosted as a stateless **Azure Static Web App** for the create redirect page and basic validation
+- 🌐 **ASP.NET frontend** hosted as an **Azure Web App** for the create redirect page and basic validation
 - ⚡ **Azure Functions** for redirect creation and redirect lookup
 - 🗂️ **Azure Table Storage** for low cost persistence of alias and target URL mappings
-- 🚪 **Azure Front Door** for global entry and edge caching of redirect responses
-- 🔴 **Azure Cache for Redis** as an optional performance layer that can be turned on or off
+- 🚪 **Azure Front Door** as an optional edge entry point for unified routing in production
 
 ### User Flow Diagram
 
 ```mermaid
 flowchart LR
     A["User opens go.example.com"] --> B["Azure Front Door redirects to /ui"]
-    B --> C["ASP.NET frontend in Azure Static Web Apps"]
+    B --> C["ASP.NET frontend in Azure Web App"]
     C --> D["User enters custom alias and target URL"]
     D --> E["Basic validation runs in the frontend and backend"]
     E --> F["Azure Function stores alias mapping"]
@@ -47,9 +46,8 @@ flowchart LR
     F --> H["User receives redirect URL"]
     I["Visitor opens go.example.com/alias"] --> J["Azure Front Door"]
     J --> K["Redirect lookup function resolves alias"]
-    K --> L["Redis cache when enabled"]
-    K --> M["Azure Table Storage when cache is disabled or missed"]
-    K --> N["HTTP redirect to target URL"]
+    K --> L["Azure Table Storage lookup"]
+    K --> M["HTTP redirect to target URL"]
 ```
 
 ### Solution Architecture Diagram
@@ -57,17 +55,15 @@ flowchart LR
 ```mermaid
 flowchart TB
     FD["Azure Front Door"]
-    SWA["Azure Static Web Apps frontend"]
+    WEB["Azure Web App frontend"]
     FUNC["Azure Functions"]
     TABLE["Azure Table Storage"]
-    REDIS["Azure Cache for Redis<br/>Optional"]
     TARGET["Target destination URL"]
 
-    FD --> SWA
+    FD --> WEB
     FD --> FUNC
-    SWA --> FUNC
+    WEB --> FUNC
     FUNC --> TABLE
-    FUNC --> REDIS
     FUNC --> TARGET
 ```
 
@@ -86,16 +82,14 @@ flowchart TB
 
 1. A visitor opens the redirect URL at `/{alias}`.
 2. In local or server-hosted runs, the ASP.NET web host can resolve `/{alias}` directly against the shared repository.
-3. In the target Azure deployment, Azure Front Door sends `/ui` and `/ui/assets/*` to Static Web Apps, `/api/*` to Azure Functions, and the remaining root paths to redirect lookup.
-4. Azure Functions resolves the alias on cache miss or direct lookup.
-5. The function reads from Redis when enabled, otherwise from Table Storage.
-6. The platform returns the redirect response to the visitor.
+3. In the target Azure deployment, Azure Front Door can send `/ui` and `/ui/assets/*` to the Web App, `/api/*` to Azure Functions, and the remaining root paths to redirect lookup.
+4. Azure Functions resolves the alias from Table Storage.
+5. The platform returns the redirect response to the visitor.
 
 ## 💡 Design Choices
 
 - Table Storage is the default persistence layer because the data model is simple and cost sensitive.
 - Azurite is the standard local development path so the app uses the real Table Storage code path without requiring Azure resources.
-- Redis stays optional so the platform can run cheaply at low traffic levels.
 - Front Door improves latency and reduces backend load for frequently used links.
 - The create UI lives under `/ui` so alias routes can stay clean at the root hostname.
 - Durable Functions are not required for the initial scope.
@@ -106,6 +100,7 @@ flowchart TB
 - Local development with Azurite: [docs/local-development.md](docs/local-development.md)
 - Azure deployment with Bicep: [docs/azure-deployment.md](docs/azure-deployment.md)
 - Infrastructure validation script: [infra/validate-infra.ps1](infra/validate-infra.ps1)
+- Infrastructure validation script for macOS/Linux: [infra/validate-infra.sh](infra/validate-infra.sh)
 
 ## 📦 Initial Boundaries
 
@@ -123,9 +118,8 @@ The following items are intentionally out of scope for the initial implementatio
 
 | Area     | Choice                           |
 |----------|----------------------------------|
-| Frontend | ASP.NET in Azure Static Web Apps |
+| Frontend | ASP.NET in Azure Web App         |
 | Backend  | Azure Functions                  |
 | Storage  | Azure Table Storage              |
-| Cache    | Redis optional                   |
-| Edge     | Azure Front Door                 |
+| Edge     | Azure Front Door optional        |
 | Goal     | Fast redirects at low cost       |

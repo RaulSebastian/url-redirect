@@ -25,15 +25,15 @@ param deployFrontDoor bool = true
 param frontDoorSessionAffinity bool = false
 
 var resourceToken = toLower(replace('${appName}${environmentName}${uniqueString(resourceGroup().id)}', '-', ''))
-var storageAccountName = substring('st${resourceToken}', 0, 24)
-var functionAppName = substring('${appName}-${environmentName}-func', 0, 60)
-var webPlanName = substring('${appName}-${environmentName}-web-plan', 0, 40)
-var webAppName = substring('${appName}-${environmentName}-web', 0, 60)
-var functionPlanName = substring('${appName}-${environmentName}-func-plan', 0, 40)
-var appInsightsName = substring('${appName}-${environmentName}-appi', 0, 260)
-var logAnalyticsName = substring('${appName}-${environmentName}-logs', 0, 63)
-var frontDoorProfileName = substring('${appName}-${environmentName}-afd', 0, 260)
-var frontDoorEndpointName = substring(replace('${appName}-${environmentName}-${uniqueString(resourceGroup().id)}', '-', ''), 0, 46)
+var storageAccountName = take('st${resourceToken}', 24)
+var functionAppName = take('${appName}-${environmentName}-func', 60)
+var webPlanName = take('${appName}-${environmentName}-web-plan', 40)
+var webAppName = take('${appName}-${environmentName}-web', 60)
+var functionPlanName = take('${appName}-${environmentName}-func-plan', 40)
+var appInsightsName = take('${appName}-${environmentName}-appi', 260)
+var logAnalyticsName = take('${appName}-${environmentName}-logs', 63)
+var frontDoorProfileName = take('${appName}-${environmentName}-afd', 260)
+var frontDoorEndpointName = take(replace('${appName}-${environmentName}-${uniqueString(resourceGroup().id)}', '-', ''), 46)
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
@@ -50,14 +50,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 }
 
 resource tableService 'Microsoft.Storage/storageAccounts/tableServices@2023-05-01' = {
-  name: '${storageAccount.name}/default'
+  name: 'default'
+  parent: storageAccount
 }
 
 resource redirectsTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2023-05-01' = {
-  name: '${storageAccount.name}/default/${redirectsTableName}'
-  dependsOn: [
-    tableService
-  ]
+  name: redirectsTableName
+  parent: tableService
 }
 
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -189,7 +188,8 @@ resource frontDoorProfile 'Microsoft.Cdn/profiles@2024-02-01' = if (deployFrontD
 }
 
 resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}'
+  name: frontDoorEndpointName
+  parent: frontDoorProfile
   location: 'global'
   properties: {
     enabledState: 'Enabled'
@@ -197,7 +197,8 @@ resource frontDoorEndpoint 'Microsoft.Cdn/profiles/afdEndpoints@2024-02-01' = if
 }
 
 resource webOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/web-origin-group'
+  name: 'web-origin-group'
+  parent: frontDoorProfile
   properties: {
     sessionAffinityState: frontDoorSessionAffinity ? 'Enabled' : 'Disabled'
     healthProbeSettings: {
@@ -215,7 +216,8 @@ resource webOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' = if (d
 }
 
 resource functionsOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/functions-origin-group'
+  name: 'functions-origin-group'
+  parent: frontDoorProfile
   properties: {
     sessionAffinityState: 'Disabled'
     loadBalancingSettings: {
@@ -227,7 +229,8 @@ resource functionsOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' =
 }
 
 resource webOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/web-origin-group/web-app-origin'
+  name: 'web-app-origin'
+  parent: webOriginGroup
   properties: {
     hostName: webApp.properties.defaultHostName
     originHostHeader: webApp.properties.defaultHostName
@@ -236,12 +239,13 @@ resource webOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2024-02-01' = if
     priority: 1
     weight: 1000
     enabledState: 'Enabled'
-    certificateNameCheckState: 'Enabled'
+    enforceCertificateNameCheck: true
   }
 }
 
 resource functionsOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/functions-origin-group/functions-app-origin'
+  name: 'functions-app-origin'
+  parent: functionsOriginGroup
   properties: {
     hostName: functionApp.properties.defaultHostName
     originHostHeader: functionApp.properties.defaultHostName
@@ -250,12 +254,13 @@ resource functionsOrigin 'Microsoft.Cdn/profiles/originGroups/origins@2024-02-01
     priority: 1
     weight: 1000
     enabledState: 'Enabled'
-    certificateNameCheckState: 'Enabled'
+    enforceCertificateNameCheck: true
   }
 }
 
 resource webRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}/web-route'
+  name: 'web-route'
+  parent: frontDoorEndpoint
   properties: {
     originGroup: {
       id: webOriginGroup.id
@@ -277,7 +282,8 @@ resource webRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2024-02-01' = if (
 }
 
 resource apiRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}/api-route'
+  name: 'api-route'
+  parent: frontDoorEndpoint
   properties: {
     originGroup: {
       id: functionsOriginGroup.id
@@ -297,7 +303,8 @@ resource apiRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2024-02-01' = if (
 }
 
 resource aliasRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2024-02-01' = if (deployFrontDoor) {
-  name: '${frontDoorProfile.name}/${frontDoorEndpointName}/alias-route'
+  name: 'alias-route'
+  parent: frontDoorEndpoint
   properties: {
     originGroup: {
       id: functionsOriginGroup.id
@@ -323,4 +330,4 @@ output webAppDefaultHostName string = webApp.properties.defaultHostName
 output functionAppName string = functionApp.name
 output functionAppDefaultHostName string = functionApp.properties.defaultHostName
 output applicationInsightsName string = applicationInsights.name
-output frontDoorEndpointHostName string = deployFrontDoor ? frontDoorEndpoint.properties.hostName : ''
+output frontDoorEndpointHostName string = deployFrontDoor ? frontDoorEndpoint!.properties.hostName : ''
