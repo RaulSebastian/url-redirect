@@ -16,7 +16,7 @@ public static partial class RedirectRequestValidator
         }
         else if (ReservedAliases.Contains(normalizedAlias))
         {
-            AddError("Alias", $"The alias '{normalizedAlias}' is reserved.");
+            AddError("Alias", $"\"{normalizedAlias}\" is a reserved alias and cannot be used.");
         }
         else if (!AliasPattern().IsMatch(normalizedAlias))
         {
@@ -58,7 +58,10 @@ public static partial class RedirectRequestValidator
     private static readonly HashSet<string> ReservedAliases = new(StringComparer.Ordinal)
     {
         "api",
-        "ui"
+        "ui",
+        "admin",
+        "login",
+        "logout",
     };
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-_]{2,39}$", RegexOptions.CultureInvariant)]

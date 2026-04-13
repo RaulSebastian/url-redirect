@@ -4,49 +4,44 @@
     ViewData["Title"] = "Create redirect";
 }
 
-<section class="hero">
-    <div class="hero-copy">
-        <p class="eyebrow">RedirectApp</p>
-        <h1>URL Redirect</h1>
-        <p class="lead">
-            Create a short redirect in seconds.
-        </p>
-    </div>
-</section>
+<div class="intro">
+    <p class="eyebrow">RedirectApp <span class="version-badge">v1.0.0</span></p>
+    <h1>url redirect</h1>
+    <p class="lede">Create a short, shareable redirect in seconds.</p>
+</div>
 
-<section class="panel">
-    <div class="panel-header">
-        <h2>New redirect</h2>
-    </div>
+<div class="card">
+    <h2>New redirect</h2>
 
-    <form id="redirect-form" class="redirect-form" novalidate>
-        <div id="validation-summary" class="validation-summary" hidden></div>
+    <form id="redirect-form" novalidate>
+        <div id="validation-summary" class="status-banner status-error" hidden></div>
 
         <div class="field">
             <label for="alias">Custom alias</label>
-            <input id="alias" name="alias" autocomplete="off" placeholder="summer-sale" pattern="^[a-z0-9][a-z0-9-_]{2,39}$" required />
-            <small>Use 3 to 40 lowercase characters with letters, numbers, hyphens, or underscores.</small>
+            <input id="alias" name="alias" autocomplete="off" placeholder="summer-sale"
+                   pattern="^[a-z0-9][a-z0-9-_]{2,39}$" required />
             <span id="alias-error" class="field-error"></span>
+            <small>3–40 characters: letters, digits, hyphens, underscores.</small>
         </div>
 
         <div class="field">
             <label for="target-url">Target URL</label>
-            <input id="target-url" name="targetUrl" type="url" autocomplete="off" placeholder="https://example.com/campaign" required />
-            <small>Only valid absolute URLs are accepted.</small>
+            <input id="target-url" name="targetUrl" type="url" autocomplete="off"
+                   placeholder="https://www.amazon.com/campaign?article=2454325" required />
             <span id="target-url-error" class="field-error"></span>
+            <small>Must be a valid absolute URL.</small>
         </div>
 
-        <button type="submit" id="submit-button" class="primary-button">Create redirect</button>
+        <div class="actions">
+            <button type="submit" id="submit-button" class="button-primary">Create redirect</button>
+        </div>
     </form>
 
-    <section id="result-card" class="result-card" aria-live="polite" hidden>
+    <div id="result-card" class="status-banner status-success result-success" aria-live="polite" hidden>
         <p class="result-label">Redirect created</p>
         <a id="result-url" href="#" class="result-url"></a>
-        <p class="result-note">
-            The redirect has been validated and persisted by the backend.
-        </p>
-    </section>
-</section>
+    </div>
+</div>
 
 @section Scripts {
     <script src="/ui/assets/site.js" asp-append-version="true"></script>

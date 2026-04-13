@@ -7,17 +7,12 @@
     <link rel="stylesheet" href="/ui/assets/site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="page-shell">
-        <header class="site-header">
-            <a href="/ui" class="brand">URL Redirect</a>
-            <span class="badge">Frontend MVP</span>
-        </header>
-
-        <main class="content">
-            @RenderBody()
-        </main>
+    <div class="shell">
+        @RenderBody()
+        <footer class="shell-footer">
+            © Copyright <a href="https://raulschnelzer.de" class="footer-sig" target="_blank" rel="noopener">Raul Schnelzer</a> @DateTime.UtcNow.Year. All rights reserved.
+        </footer>
     </div>
-
-    @RenderSection("Scripts", required: false)
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
