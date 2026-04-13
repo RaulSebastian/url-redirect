@@ -104,6 +104,7 @@ flowchart TB
 
 - V1 contract: [docs/v1-contract.md](docs/v1-contract.md)
 - Local development with Azurite: [docs/local-development.md](docs/local-development.md)
+- Azure deployment with Bicep: [docs/azure-deployment.md](docs/azure-deployment.md)
 
 ## 📦 Initial Boundaries
 
