@@ -22,21 +22,52 @@ Azure Front Door is optional and controlled by the `deployFrontDoor` parameter. 
 - `/api/*` -> Azure Functions
 - `/*` -> Azure Functions for redirect alias lookups
 
-## Deploy
+## Environment configuration
 
-Create a resource group if needed:
+The repository includes two checked-in parameter files:
+
+- Development: [`infra/main.dev.parameters.json`](../infra/main.dev.parameters.json)
+- Production: [`infra/main.prod.parameters.json`](../infra/main.prod.parameters.json)
+
+The defaults are intentionally different:
+
+- Development uses a `Basic` web plan and disables Front Door to keep costs and moving parts lower.
+- Production uses a `PremiumV3` web plan and enables Front Door for the single-host routing model described in the README.
+
+Adjust the values to match your subscription, region, and cost targets before deployment.
+
+## Validate
+
+Before deploying, validate the template and parameter files:
 
 ```powershell
-az group create --name rg-urlredirect-dev --location westeurope
+./infra/validate-infra.ps1
 ```
 
-Deploy the infrastructure:
+Notes:
+
+- The script requires Azure CLI.
+- `az deployment group validate --validation-level Template` is used so the template can be checked without provisioning resources.
+- You may still want to run `what-if` against a real resource group before production changes.
+
+## Deploy
+
+Use the deployment script for a repeatable flow:
 
 ```powershell
-az deployment group create `
-  --resource-group rg-urlredirect-dev `
-  --template-file infra/main.bicep `
-  --parameters @infra/main.parameters.json
+./infra/deploy-infra.ps1 -ResourceGroupName rg-urlredirect-dev -Environment dev -WhatIf
+```
+
+Apply the development deployment:
+
+```powershell
+./infra/deploy-infra.ps1 -ResourceGroupName rg-urlredirect-dev -Environment dev
+```
+
+Apply the production deployment:
+
+```powershell
+./infra/deploy-infra.ps1 -ResourceGroupName rg-urlredirect-prod -Environment prod
 ```
 
 ## After provisioning
@@ -46,4 +77,15 @@ This Bicep provisions infrastructure and configuration, but it does not publish 
 - `src/UrlRedirect.Functions` to the Azure Functions app
 - `src/UrlRedirect.Web` to the Azure Web App
 
+Example publish commands:
+
+```powershell
+dotnet publish src/UrlRedirect.Functions/UrlRedirect.Functions.csproj -c Release
+dotnet publish src/UrlRedirect.Web/UrlRedirect.Web.csproj -c Release
+```
+
 If you want a custom domain on Front Door, add it after the base deployment and bind your certificate and DNS records.
+
+## Validation status
+
+The scripts and templates are version-controlled in the repository. In this coding session they were updated and reviewed, but they were not executed end-to-end here because Azure CLI is not installed in the current environment. Run `./infra/validate-infra.ps1` locally or in CI to complete the verification step.
