@@ -1,0 +1,98 @@
+name: Deploy Dev
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
+env:
+  SOLUTION_PATH: src/UrlRedirect.sln
+  WEB_PROJECT_PATH: src/UrlRedirect.Web/UrlRedirect.Web.csproj
+  FUNCTIONS_PROJECT_PATH: src/UrlRedirect.Functions/UrlRedirect.Functions.csproj
+  WEB_OUTPUT_PATH: out/web
+  FUNCTIONS_OUTPUT_PATH: out/functions
+  WEB_ZIP_PATH: out/web.zip
+  FUNCTIONS_ZIP_PATH: out/functions.zip
+  AZURE_RESOURCE_GROUP: rg-urlredirect-dev
+  AZURE_WEBAPP_NAME: urlredirect-dev-web
+  AZURE_FUNCTIONAPP_NAME: urlredirect-dev-func
+
+jobs:
+  build-and-deploy:
+    name: Build, Test, and Deploy Dev
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore $SOLUTION_PATH
+
+      - name: Build
+        run: dotnet build $SOLUTION_PATH --configuration Release --no-restore
+
+      - name: Detect test projects
+        id: test-projects
+        shell: bash
+        run: |
+          if find src -name '*Tests.csproj' -o -name '*.Tests.csproj' | grep -q .; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        if: steps.test-projects.outputs.has_tests == 'true'
+        run: dotnet test $SOLUTION_PATH --configuration Release --no-build --verbosity normal
+
+      - name: Publish Web App
+        run: dotnet publish $WEB_PROJECT_PATH --configuration Release --no-build --output $WEB_OUTPUT_PATH
+
+      - name: Publish Function App
+        run: dotnet publish $FUNCTIONS_PROJECT_PATH --configuration Release --no-build --output $FUNCTIONS_OUTPUT_PATH
+
+      - name: Package Web App
+        working-directory: ${{ env.WEB_OUTPUT_PATH }}
+        run: zip -r ../web.zip .
+
+      - name: Package Function App
+        working-directory: ${{ env.FUNCTIONS_OUTPUT_PATH }}
+        run: zip -r ../functions.zip .
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ${{ env.WEB_ZIP_PATH }}
+
+      - name: Deploy Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.FUNCTIONS_ZIP_PATH }}
