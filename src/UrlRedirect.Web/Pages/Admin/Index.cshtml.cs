@@ -49,7 +49,7 @@ public sealed class IndexModel : PageModel
                 : $"Redirect '{alias}' was not found.";
         }
 
-        return RedirectToPage(new
+        return RedirectToPage("/Admin/Index", new
         {
             page = NormalizePage(pageNumber),
             pageSize = NormalizePageSize(pageSize)

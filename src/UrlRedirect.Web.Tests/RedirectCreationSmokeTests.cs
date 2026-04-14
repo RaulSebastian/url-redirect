@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -128,6 +129,43 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Equal(HttpStatusCode.OK, largerPageResponse.StatusCode);
         Assert.Contains("alias-12", largerPageHtml);
         Assert.Contains("Page 1 of 1", largerPageHtml);
+    }
+
+    [Fact]
+    public async Task AdminDelete_RemovesRedirect_AndRedirectsBackToAdminPage()
+    {
+        using var factory = _factory.WithAuthenticatedAdmin().WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository(
+                new Redirect("summer-sale", "https://example.com/campaign", DateTime.UtcNow)));
+        });
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        var pageResponse = await client.GetAsync("/admin");
+        var pageHtml = await pageResponse.Content.ReadAsStringAsync();
+        var antiforgeryToken = Regex.Match(pageHtml, "name=\"__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"")
+            .Groups[1]
+            .Value;
+
+        Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
+        Assert.False(string.IsNullOrWhiteSpace(antiforgeryToken));
+
+        using var content = new FormUrlEncodedContent(
+        [
+            new KeyValuePair<string, string>("alias", "summer-sale"),
+            new KeyValuePair<string, string>("page", "1"),
+            new KeyValuePair<string, string>("pageSize", "10"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", antiforgeryToken)
+        ]);
+
+        var response = await client.PostAsync("/admin?handler=Delete", content);
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/admin?pageSize=10", response.Headers.Location?.ToString());
     }
 
     [Fact]
