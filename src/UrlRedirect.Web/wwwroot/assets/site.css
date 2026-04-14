@@ -68,7 +68,7 @@ a {
 
 .topbar-links {
     display: flex;
-    align-items: center;
+    align-items: center;<
     gap: 16px;
     flex-wrap: wrap;
     width: 100%;
@@ -156,7 +156,61 @@ a {
 }
 
 .admin-actions {
-    margin-bottom: 18px;
+    margin-top: 18px;
+}
+
+.admin-toolbar,
+.admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.admin-toolbar {
+    margin-bottom: 14px;
+}
+
+.admin-pagination {
+    margin-top: 14px;
+}
+
+.table-summary,
+.pagination-summary {
+    color: var(--page-muted);
+    font-size: 0.95rem;
+}
+
+.page-size-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-size-form label {
+    color: var(--page-muted);
+    font-weight: 700;
+}
+
+.page-size-form select {
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    font: inherit;
+    color: var(--page-text);
+    background: #181818;
+}
+
+.page-size-form select:focus {
+    outline: none;
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 3px rgba(40, 153, 245, 0.28);
+}
+
+.pagination-link.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
 }
 
 form {
@@ -270,13 +324,13 @@ form {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 14px;
+    padding: 4px 10px;
     border: 1px solid rgba(229, 137, 137, 0.45);
     border-radius: 12px;
     background: rgba(110, 31, 31, 0.35);
     color: #ffd4d4;
-    font: inherit;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 400;
     cursor: pointer;
     transition: transform 120ms, filter 120ms;
 }
@@ -338,6 +392,11 @@ form {
     text-decoration: underline;
 }
 
+.result-actions {
+    margin-top: 14px;
+    padding-top: 0;
+}
+
 .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--border);
@@ -356,7 +415,7 @@ form {
     padding: 14px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .redirect-table th {
@@ -438,5 +497,12 @@ form {
     .button-danger {
         width: 100%;
         justify-content: center;
+    }
+
+    .admin-toolbar,
+    .admin-pagination,
+    .page-size-form {
+        align-items: stretch;
+        flex-direction: column;
     }
 }

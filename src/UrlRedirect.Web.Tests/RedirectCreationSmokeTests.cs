@@ -47,6 +47,8 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, scriptResponse.StatusCode);
         Assert.Contains("Create redirect", html);
+        Assert.Contains("Copy short URL", html);
+        Assert.Contains("Open target", html);
         Assert.Contains("/admin", html);
         Assert.Contains("/api/redirects", script);
     }
@@ -83,6 +85,47 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Contains("admin console", html);
         Assert.Contains("summer-sale", html);
         Assert.Contains("Delete", html);
+        Assert.Contains("Rows per page", html);
+        Assert.Contains("Page 1 of 1", html);
+    }
+
+    [Fact]
+    public async Task AdminPage_PaginatesRedirects_AndRespectsRequestedPageSize()
+    {
+        var redirects = Enumerable.Range(1, 12)
+            .Select(i => new Redirect($"alias-{i:00}", $"https://example.com/{i}", DateTime.UtcNow.AddMinutes(-i)))
+            .ToArray();
+
+        using var factory = _factory.WithAuthenticatedAdmin().WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository(redirects));
+        });
+        using var client = factory.CreateClient();
+
+        var firstPageResponse = await client.GetAsync("/admin");
+        var firstPageHtml = await firstPageResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, firstPageResponse.StatusCode);
+        Assert.Contains("alias-01", firstPageHtml);
+        Assert.Contains("alias-10", firstPageHtml);
+        Assert.DoesNotContain("alias-11", firstPageHtml);
+        Assert.Contains("Page 1 of 2", firstPageHtml);
+
+        var secondPageResponse = await client.GetAsync("/admin?page=2&pageSize=10");
+        var secondPageHtml = await secondPageResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, secondPageResponse.StatusCode);
+        Assert.Contains("alias-11", secondPageHtml);
+        Assert.Contains("alias-12", secondPageHtml);
+        Assert.DoesNotContain("alias-10", secondPageHtml);
+
+        var largerPageResponse = await client.GetAsync("/admin?page=1&pageSize=20");
+        var largerPageHtml = await largerPageResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, largerPageResponse.StatusCode);
+        Assert.Contains("alias-12", largerPageHtml);
+        Assert.Contains("Page 1 of 1", largerPageHtml);
     }
 
     [Fact]

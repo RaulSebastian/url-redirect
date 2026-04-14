@@ -161,6 +161,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       minTlsVersion: '1.2'
       alwaysOn: true
+      healthCheckPath: '/health'
       appSettings: [
         {
           name: 'ConnectionStrings__RedirectStorage'
@@ -202,8 +203,8 @@ resource webOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' = if (d
   properties: {
     sessionAffinityState: frontDoorSessionAffinity ? 'Enabled' : 'Disabled'
     healthProbeSettings: {
-      probePath: '/ui'
-      probeRequestType: 'HEAD'
+      probePath: '/health'
+      probeRequestType: 'GET'
       probeProtocol: 'Https'
       probeIntervalInSeconds: 120
     }
@@ -220,6 +221,12 @@ resource functionsOriginGroup 'Microsoft.Cdn/profiles/originGroups@2024-02-01' =
   parent: frontDoorProfile
   properties: {
     sessionAffinityState: 'Disabled'
+    healthProbeSettings: {
+      probePath: '/health'
+      probeRequestType: 'GET'
+      probeProtocol: 'Https'
+      probeIntervalInSeconds: 120
+    }
     loadBalancingSettings: {
       sampleSize: 4
       successfulSamplesRequired: 3

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Identity.Web;
 using UrlRedirect.Contracts.Models;
@@ -13,6 +14,7 @@ using UrlRedirect.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.Configure<AdminAuthorizationOptions>(
     builder.Configuration.GetSection(AdminAuthorizationOptions.SectionName));
 builder.Services.AddSingleton<IAuthorizationHandler, AdminAccessHandler>();
@@ -49,6 +51,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/", () => Results.Redirect("/ui"));
+app.MapHealthChecks("/health");
 
 app.MapGet(
     "/auth/login",
