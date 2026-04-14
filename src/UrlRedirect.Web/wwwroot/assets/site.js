@@ -12,6 +12,8 @@
     const validationSummary = document.getElementById("validation-summary");
     const resultCard = document.getElementById("result-card");
     const resultUrl = document.getElementById("result-url");
+    const resultTargetPreview = document.getElementById("result-target-preview");
+    const copyResultButton = document.getElementById("copy-result-button");
     const submitButton = document.getElementById("submit-button");
 
     const RESERVED_ALIASES = new Set(["api", "ui", "admin", "login", "logout"]);
@@ -60,6 +62,24 @@
         validationSummary.hidden = true;
         validationSummary.textContent = "";
         resultCard.hidden = true;
+        copyResultButton.textContent = "Copy short URL";
+    }
+
+    async function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "absolute";
+        helper.style.left = "-9999px";
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        document.body.removeChild(helper);
     }
 
     function renderValidation(errors) {
@@ -119,6 +139,7 @@
                 const payload = await response.json();
                 resultUrl.href = payload.shortUrl;
                 resultUrl.textContent = payload.shortUrl;
+                resultTargetPreview.href = payload.targetUrl;
                 resultCard.hidden = false;
                 form.reset();
                 return;
@@ -143,6 +164,15 @@
             validationSummary.hidden = false;
         } finally {
             submitButton.disabled = false;
+        }
+    });
+
+    copyResultButton.addEventListener("click", async function () {
+        try {
+            await copyText(resultUrl.href);
+            copyResultButton.textContent = "Copied";
+        } catch {
+            copyResultButton.textContent = "Copy failed";
         }
     });
 }());

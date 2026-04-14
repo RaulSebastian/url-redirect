@@ -47,6 +47,8 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, scriptResponse.StatusCode);
         Assert.Contains("Create redirect", html);
+        Assert.Contains("Copy short URL", html);
+        Assert.Contains("Open target", html);
         Assert.Contains("/admin", html);
         Assert.Contains("/api/redirects", script);
     }

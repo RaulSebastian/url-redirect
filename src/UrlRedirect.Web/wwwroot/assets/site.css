@@ -338,6 +338,11 @@ form {
     text-decoration: underline;
 }
 
+.result-actions {
+    margin-top: 14px;
+    padding-top: 0;
+}
+
 .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--border);
