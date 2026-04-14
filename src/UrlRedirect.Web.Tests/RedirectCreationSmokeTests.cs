@@ -48,9 +48,11 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.Equal(HttpStatusCode.OK, scriptResponse.StatusCode);
         Assert.Contains("Create redirect", html);
         Assert.Contains("Copy short URL", html);
-        Assert.Contains("Open target", html);
+        Assert.Contains("Show QR code", html);
+        Assert.Contains("Redirect QR code", html);
         Assert.Contains("/admin", html);
         Assert.Contains("/api/redirects", script);
+        Assert.Contains("/api/qr-code", script);
     }
 
     [Fact]
@@ -205,6 +207,29 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         Assert.True(body.StartsWith("{"), $"Expected JSON body, got: {body[..Math.Min(200, body.Length)]}");
         var payload = JsonDocument.Parse(body).RootElement;
         Assert.True(payload.TryGetProperty("message", out _));
+    }
+
+    [Fact]
+    public async Task QrCodeEndpoint_ReturnsSvg_ForAbsoluteShortUrl()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/qr-code?value=https%3A%2F%2Fexample.test%2Fsummer-sale");
+        var svg = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("image/svg+xml; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+        Assert.Contains("<svg", svg);
+    }
+
+    [Fact]
+    public async Task QrCodeEndpoint_RejectsRelativeValues()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/qr-code?value=%2Fsummer-sale");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private sealed class CreateTestRepository : IRedirectRepository

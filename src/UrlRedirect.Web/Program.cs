@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Identity.Web;
+using QRCoder;
 using UrlRedirect.Contracts.Models;
 using UrlRedirect.Domain.Model;
 using UrlRedirect.Domain.Repositories;
@@ -108,6 +109,29 @@ app.MapPost(
         var response = new CreateRedirectResponse(alias, shortUrl, targetUrl, (int)System.Net.HttpStatusCode.Found);
 
         return Results.Created($"/api/redirects/{alias}", response);
+    });
+
+app.MapGet(
+    "/api/qr-code",
+    (string? value) =>
+    {
+        if (string.IsNullOrWhiteSpace(value)
+            || !Uri.TryCreate(value, UriKind.Absolute, out var url)
+            || (url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps))
+        {
+            return Results.BadRequest(new { message = "A valid absolute URL is required." });
+        }
+
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(value, QRCodeGenerator.ECCLevel.Q);
+        var svgQrCode = new SvgQRCode(data);
+        var svg = svgQrCode.GetGraphic(
+            pixelsPerModule: 12,
+            darkColorHex: "#10233f",
+            lightColorHex: "#f7fbff",
+            drawQuietZones: true);
+
+        return Results.Content(svg, "image/svg+xml; charset=utf-8");
     });
 
 app.MapGet(

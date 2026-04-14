@@ -12,8 +12,12 @@
     const validationSummary = document.getElementById("validation-summary");
     const resultCard = document.getElementById("result-card");
     const resultUrl = document.getElementById("result-url");
-    const resultTargetPreview = document.getElementById("result-target-preview");
     const copyResultButton = document.getElementById("copy-result-button");
+    const showQrButton = document.getElementById("show-qr-button");
+    const qrModal = document.getElementById("qr-modal");
+    const qrCodeImage = document.getElementById("qr-code-image");
+    const qrModalLink = document.getElementById("qr-modal-link");
+    const closeQrButton = document.getElementById("close-qr-button");
     const submitButton = document.getElementById("submit-button");
 
     const RESERVED_ALIASES = new Set(["api", "ui", "admin", "login", "logout"]);
@@ -63,6 +67,7 @@
         validationSummary.textContent = "";
         resultCard.hidden = true;
         copyResultButton.textContent = "Copy short URL";
+        hideQrModal();
     }
 
     async function copyText(text) {
@@ -109,6 +114,28 @@
         }
     }
 
+    function buildQrCodeUrl(value) {
+        return "/api/qr-code?value=" + encodeURIComponent(value);
+    }
+
+    function showQrModal() {
+        const shortUrl = resultUrl.href;
+        qrCodeImage.src = buildQrCodeUrl(shortUrl);
+        qrModalLink.href = shortUrl;
+        qrModalLink.textContent = shortUrl;
+        qrModal.hidden = false;
+        document.body.style.overflow = "hidden";
+        closeQrButton.focus();
+    }
+
+    function hideQrModal() {
+        qrModal.hidden = true;
+        qrCodeImage.removeAttribute("src");
+        qrModalLink.href = "#";
+        qrModalLink.textContent = "";
+        document.body.style.overflow = "";
+    }
+
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
         clearFeedback();
@@ -139,7 +166,6 @@
                 const payload = await response.json();
                 resultUrl.href = payload.shortUrl;
                 resultUrl.textContent = payload.shortUrl;
-                resultTargetPreview.href = payload.targetUrl;
                 resultCard.hidden = false;
                 form.reset();
                 return;
@@ -173,6 +199,26 @@
             copyResultButton.textContent = "Copied";
         } catch {
             copyResultButton.textContent = "Copy failed";
+        }
+    });
+
+    showQrButton.addEventListener("click", function () {
+        showQrModal();
+    });
+
+    closeQrButton.addEventListener("click", function () {
+        hideQrModal();
+    });
+
+    qrModal.addEventListener("click", function (event) {
+        if (event.target === qrModal) {
+            hideQrModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !qrModal.hidden) {
+            hideQrModal();
         }
     });
 }());
