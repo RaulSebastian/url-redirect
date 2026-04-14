@@ -22,6 +22,20 @@
     }
     else
     {
+        <div class="admin-toolbar">
+            <p class="table-summary">Showing @Model.Redirects.Count of @Model.TotalCount redirects</p>
+
+            <form method="get" class="page-size-form">
+                <input type="hidden" name="page" value="1" />
+                <label for="page-size">Rows per page</label>
+                <select id="page-size" name="pageSize" onchange="this.form.submit()">
+                    <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                    <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                    <option value="50" selected="@(Model.PageSize == 50)">50</option>
+                </select>
+            </form>
+        </div>
+
         <div class="table-wrap">
             <table class="redirect-table">
                 <thead>
@@ -44,6 +58,8 @@
                         <td>
                             <form method="post" asp-page-handler="Delete" class="inline-form">
                                 <input type="hidden" name="alias" value="@redirect.Alias" />
+                                <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                <input type="hidden" name="pageSize" value="@Model.PageSize" />
                                 <button type="submit" class="button-danger">Delete</button>
                             </form>
                         </td>
@@ -51,6 +67,24 @@
                 }
                 </tbody>
             </table>
+        </div>
+
+        <div class="admin-pagination">
+            <a
+                class="button-secondary pagination-link @(Model.HasPreviousPage ? string.Empty : "is-disabled")"
+                asp-page="/Admin/Index"
+                asp-route-page="@(Model.CurrentPage - 1)"
+                asp-route-pageSize="@Model.PageSize"
+                aria-disabled="@(!Model.HasPreviousPage)"
+                tabindex="@(Model.HasPreviousPage ? "0" : "-1")">Previous</a>
+            <p class="pagination-summary">Page @Model.CurrentPage of @Model.TotalPages</p>
+            <a
+                class="button-secondary pagination-link @(Model.HasNextPage ? string.Empty : "is-disabled")"
+                asp-page="/Admin/Index"
+                asp-route-page="@(Model.CurrentPage + 1)"
+                asp-route-pageSize="@Model.PageSize"
+                aria-disabled="@(!Model.HasNextPage)"
+                tabindex="@(Model.HasNextPage ? "0" : "-1")">Next</a>
         </div>
     }
 
