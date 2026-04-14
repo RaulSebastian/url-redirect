@@ -68,7 +68,7 @@ a {
 
 .topbar-links {
     display: flex;
-    align-items: center;
+    align-items: center;<
     gap: 16px;
     flex-wrap: wrap;
     width: 100%;
@@ -156,7 +156,7 @@ a {
 }
 
 .admin-actions {
-    margin-bottom: 18px;
+    margin-top: 18px;
 }
 
 form {
@@ -270,13 +270,13 @@ form {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 14px;
+    padding: 4px 10px;
     border: 1px solid rgba(229, 137, 137, 0.45);
     border-radius: 12px;
     background: rgba(110, 31, 31, 0.35);
     color: #ffd4d4;
-    font: inherit;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 400;
     cursor: pointer;
     transition: transform 120ms, filter 120ms;
 }
@@ -356,7 +356,7 @@ form {
     padding: 14px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
 }
 
 .redirect-table th {

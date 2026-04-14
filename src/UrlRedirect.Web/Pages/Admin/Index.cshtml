@@ -5,17 +5,12 @@
 }
 
 <div class="intro">
-    <p class="eyebrow">RedirectApp <span class="version-badge">admin</span></p>
+    <p class="eyebrow">RedirectApp <span class="version-badge">v1.1</span></p>
     <h1>admin console</h1>
     <p class="lede">Signed in as <strong>@Model.DisplayName</strong>. Review every redirect and remove entries when needed.</p>
 </div>
 
 <div class="card">
-    <div class="actions admin-actions">
-        <a href="/ui" class="button-secondary">Open public UI</a>
-        <a href="/auth/logout?returnUrl=/ui" class="button-secondary">Sign out</a>
-    </div>
-
     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
     {
         <div class="status-banner status-success result-success">@Model.StatusMessage</div>
@@ -58,4 +53,9 @@
             </table>
         </div>
     }
+
+    <div class="actions admin-actions">
+        <a href="/ui" class="button-secondary">Open public UI</a>
+        <a href="/auth/logout?returnUrl=/ui" class="button-secondary">Sign out</a>
+    </div>
 </div>
