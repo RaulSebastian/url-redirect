@@ -56,6 +56,28 @@ public sealed class AzureTableRedirectRepositoryIntegrationTests
         Assert.Null(redirect);
     }
 
+    [SkippableFact]
+    public async Task GetAllAndDelete_WorkAgainstRealTableStorage()
+    {
+        Skip.IfNot(await AzureTableRepositoryTestContext.IsAzuriteAvailableAsync(), AzureTableRepositoryTestContext.SkipMessage);
+        await using var context = await AzureTableRepositoryTestContext.CreateAsync();
+
+        await context.Repository.TryCreateAsync(
+            new Redirect("alpha", "https://example.com/a", DateTime.UtcNow.AddMinutes(-2)),
+            CancellationToken.None);
+        await context.Repository.TryCreateAsync(
+            new Redirect("beta", "https://example.com/b", DateTime.UtcNow.AddMinutes(-1)),
+            CancellationToken.None);
+
+        var redirects = await context.Repository.GetAllAsync(CancellationToken.None);
+        var deleted = await context.Repository.DeleteAsync("alpha", CancellationToken.None);
+        var deletedRedirect = await context.Repository.GetByAliasAsync("alpha", CancellationToken.None);
+
+        Assert.Equal(2, redirects.Count);
+        Assert.True(deleted);
+        Assert.Null(deletedRedirect);
+    }
+
     private sealed class AzureTableRepositoryTestContext : IAsyncDisposable
     {
         private const string ConnectionString = "UseDevelopmentStorage=true";

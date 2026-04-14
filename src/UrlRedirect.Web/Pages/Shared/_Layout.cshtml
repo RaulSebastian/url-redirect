@@ -8,6 +8,20 @@
 </head>
 <body>
     <div class="shell">
+        <header class="topbar">
+            <nav class="topbar-links" aria-label="Primary">
+                <a href="/ui">Public UI</a>
+                <a href="/admin">Admin</a>
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <a href="/auth/logout?returnUrl=/ui">Sign out</a>
+                }
+                else
+                {
+                    <a href="/auth/login?returnUrl=/admin">Sign in</a>
+                }
+            </nav>
+        </header>
         @RenderBody()
         <footer class="shell-footer">
             © Copyright <a href="https://raulschnelzer.de" class="footer-sig" target="_blank" rel="noopener">Raul Schnelzer</a> @DateTime.UtcNow.Year. All rights reserved.

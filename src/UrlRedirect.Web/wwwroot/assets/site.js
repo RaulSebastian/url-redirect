@@ -14,7 +14,7 @@
     const resultUrl = document.getElementById("result-url");
     const submitButton = document.getElementById("submit-button");
 
-    const RESERVED_ALIASES = new Set(["api", "ui"]);
+    const RESERVED_ALIASES = new Set(["api", "ui", "admin", "login", "logout"]);
     const ALIAS_PATTERN = /^[a-z0-9][a-z0-9\-_]{2,39}$/;
 
     function validateAliasValue(value) {
@@ -130,6 +130,12 @@
 
             if (response.status === 400 && payload.errors) {
                 renderValidation(payload.errors);
+                return;
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                validationSummary.textContent = "Your session is no longer authorized. Sign in again to continue.";
+                validationSummary.hidden = false;
                 return;
             }
 

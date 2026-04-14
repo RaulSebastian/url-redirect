@@ -5,6 +5,7 @@ This repository now includes Bicep in [`infra/main.bicep`](../infra/main.bicep) 
 - Storage account with the `redirects` Azure Table
 - Azure Functions hosting plan and function app
 - App Service plan and ASP.NET web app
+- Microsoft Entra ID backed admin authentication configuration for `/admin`
 - Log Analytics workspace and Application Insights
 - Azure Front Door Standard for `/ui`, `/api/*`, and alias routing
 
@@ -30,8 +31,8 @@ The deployment wires the same storage account into both application hosts:
 
 Azure Front Door is optional and controlled by the `deployFrontDoor` parameter. When enabled, the routes are:
 
-- `/`, `/ui`, `/ui/*` -> ASP.NET web app
-- `/api/*` -> Azure Functions
+- `/`, `/ui`, `/ui/*`, `/admin` -> ASP.NET web app
+- `/api/*` -> ASP.NET web app
 - `/*` -> Azure Functions for redirect alias lookups
 
 ## Environment configuration
@@ -47,6 +48,19 @@ The defaults are intentionally different:
 - Production uses a `PremiumV3` web plan and enables Front Door for the single-host routing model described in the README.
 
 Adjust the values to match your subscription, region, and cost targets before deployment.
+
+## Entra ID configuration
+
+Infrastructure provisioning creates the hosting resources, but the Entra app registration is still an application-level setup step.
+
+Before using `/admin`, configure:
+
+- an Entra app registration for the web app
+- a redirect URI of `https://<web-app-host>/signin-oidc`
+- a client secret stored in App Service settings
+- at least one allowed admin group ID or app role
+
+See [`docs/entra-auth.md`](./entra-auth.md) for the exact settings and recommended group-based setup.
 
 ## Validate
 
@@ -109,6 +123,16 @@ This Bicep provisions infrastructure and configuration, but it does not publish 
 - `src/UrlRedirect.Functions` to the Azure Functions app
 - `src/UrlRedirect.Web` to the Azure Web App
 
+After publishing the web app, add these App Service settings for Entra authentication and admin authorization:
+
+- `Authentication__AzureAd__Instance`
+- `Authentication__AzureAd__TenantId`
+- `Authentication__AzureAd__ClientId`
+- `Authentication__AzureAd__ClientSecret`
+- `Authentication__AzureAd__CallbackPath`
+- `Authorization__Admin__AllowedGroupIds__0`
+- `Authorization__Admin__AllowedRoles__0`
+
 Example publish commands:
 
 ```powershell
@@ -141,7 +165,8 @@ az webapp deploy \
 After deployment, test:
 
 - Web UI: `https://<web-app-name>.azurewebsites.net/ui`
-- Create API: `https://<function-app-name>.azurewebsites.net/api/redirects`
+- Admin UI: `https://<web-app-name>.azurewebsites.net/admin`
+- Create API: `https://<web-app-name>.azurewebsites.net/api/redirects`
 - Redirect lookup: `https://<web-app-name>.azurewebsites.net/{alias}` for direct Web App access in dev, or the Front Door hostname in environments where Front Door is enabled
 
 You can confirm infrastructure creation with:

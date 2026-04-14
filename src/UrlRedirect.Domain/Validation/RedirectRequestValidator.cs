@@ -60,8 +60,12 @@ public static partial class RedirectRequestValidator
         "api",
         "ui",
         "admin",
+        "account",
+        "auth",
         "login",
         "logout",
+        "signin-oidc",
+        "signout-callback-oidc",
     };
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-_]{2,39}$", RegexOptions.CultureInvariant)]
