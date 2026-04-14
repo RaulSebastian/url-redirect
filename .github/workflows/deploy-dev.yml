@@ -29,11 +29,10 @@ env:
   AZURE_FUNCTIONAPP_NAME: urlredirect-dev-func
 
 jobs:
-  build-and-deploy:
-    name: Build, Test, and Deploy Dev
+  build-test-package:
+    name: Build, Test, and Package Dev
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - name: Checkout
@@ -78,6 +77,33 @@ jobs:
         working-directory: ${{ env.FUNCTIONS_OUTPUT_PATH }}
         run: zip -r ../functions.zip .
 
+      - name: Upload Web App Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-package
+          path: ${{ env.WEB_ZIP_PATH }}
+          if-no-files-found: error
+
+      - name: Upload Function App Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-package
+          path: ${{ env.FUNCTIONS_ZIP_PATH }}
+          if-no-files-found: error
+
+  deploy-web:
+    name: Deploy Web App Dev
+    needs: build-test-package
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Download Web App Package
+        uses: actions/download-artifact@v4
+        with:
+          name: web-package
+          path: out
+
       - name: Azure login
         uses: azure/login@v2
         with:
@@ -89,10 +115,30 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: ${{ env.WEB_ZIP_PATH }}
+          package: out/web.zip
+
+  deploy-functions:
+    name: Deploy Function App Dev
+    needs: build-test-package
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Download Function App Package
+        uses: actions/download-artifact@v4
+        with:
+          name: functions-package
+          path: out
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy Function App
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: ${{ env.FUNCTIONS_ZIP_PATH }}
+          package: out/functions.zip
