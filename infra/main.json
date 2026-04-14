@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "14326359046355694343"
+      "templateHash": "12064221207642978773"
     }
   },
   "parameters": {
@@ -68,15 +68,15 @@
   },
   "variables": {
     "resourceToken": "[toLower(replace(format('{0}{1}{2}', parameters('appName'), parameters('environmentName'), uniqueString(resourceGroup().id)), '-', ''))]",
-    "storageAccountName": "[substring(format('st{0}', variables('resourceToken')), 0, 24)]",
-    "functionAppName": "[substring(format('{0}-{1}-func', parameters('appName'), parameters('environmentName')), 0, 60)]",
-    "webPlanName": "[substring(format('{0}-{1}-web-plan', parameters('appName'), parameters('environmentName')), 0, 40)]",
-    "webAppName": "[substring(format('{0}-{1}-web', parameters('appName'), parameters('environmentName')), 0, 60)]",
-    "functionPlanName": "[substring(format('{0}-{1}-func-plan', parameters('appName'), parameters('environmentName')), 0, 40)]",
-    "appInsightsName": "[substring(format('{0}-{1}-appi', parameters('appName'), parameters('environmentName')), 0, 260)]",
-    "logAnalyticsName": "[substring(format('{0}-{1}-logs', parameters('appName'), parameters('environmentName')), 0, 63)]",
-    "frontDoorProfileName": "[substring(format('{0}-{1}-afd', parameters('appName'), parameters('environmentName')), 0, 260)]",
-    "frontDoorEndpointName": "[substring(replace(format('{0}-{1}-{2}', parameters('appName'), parameters('environmentName'), uniqueString(resourceGroup().id)), '-', ''), 0, 46)]"
+    "storageAccountName": "[take(format('st{0}', variables('resourceToken')), 24)]",
+    "functionAppName": "[take(format('{0}-{1}-func', parameters('appName'), parameters('environmentName')), 60)]",
+    "webPlanName": "[take(format('{0}-{1}-web-plan', parameters('appName'), parameters('environmentName')), 40)]",
+    "webAppName": "[take(format('{0}-{1}-web', parameters('appName'), parameters('environmentName')), 60)]",
+    "functionPlanName": "[take(format('{0}-{1}-func-plan', parameters('appName'), parameters('environmentName')), 40)]",
+    "appInsightsName": "[take(format('{0}-{1}-appi', parameters('appName'), parameters('environmentName')), 260)]",
+    "logAnalyticsName": "[take(format('{0}-{1}-logs', parameters('appName'), parameters('environmentName')), 63)]",
+    "frontDoorProfileName": "[take(format('{0}-{1}-afd', parameters('appName'), parameters('environmentName')), 260)]",
+    "frontDoorEndpointName": "[take(replace(format('{0}-{1}-{2}', parameters('appName'), parameters('environmentName'), uniqueString(resourceGroup().id)), '-', ''), 46)]"
   },
   "resources": [
     {
@@ -227,6 +227,7 @@
         "siteConfig": {
           "minTlsVersion": "1.2",
           "alwaysOn": true,
+          "healthCheckPath": "/health",
           "appSettings": [
             {
               "name": "ConnectionStrings__RedirectStorage",
@@ -280,8 +281,8 @@
       "properties": {
         "sessionAffinityState": "[if(parameters('frontDoorSessionAffinity'), 'Enabled', 'Disabled')]",
         "healthProbeSettings": {
-          "probePath": "/ui",
-          "probeRequestType": "HEAD",
+          "probePath": "/health",
+          "probeRequestType": "GET",
           "probeProtocol": "Https",
           "probeIntervalInSeconds": 120
         },
@@ -302,6 +303,12 @@
       "name": "[format('{0}/{1}', variables('frontDoorProfileName'), 'functions-origin-group')]",
       "properties": {
         "sessionAffinityState": "Disabled",
+        "healthProbeSettings": {
+          "probePath": "/health",
+          "probeRequestType": "GET",
+          "probeProtocol": "Https",
+          "probeIntervalInSeconds": 120
+        },
         "loadBalancingSettings": {
           "sampleSize": 4,
           "successfulSamplesRequired": 3,

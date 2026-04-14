@@ -61,6 +61,7 @@ public static partial class RedirectRequestValidator
         "ui",
         "admin",
         "account",
+        "health",
         "auth",
         "login",
         "logout",
