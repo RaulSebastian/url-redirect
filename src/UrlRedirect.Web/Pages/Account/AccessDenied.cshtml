@@ -1,0 +1,19 @@
+@page "/Account/AccessDenied"
+@{
+    ViewData["Title"] = "Access denied";
+}
+
+<div class="intro">
+    <p class="eyebrow">RedirectApp <span class="version-badge">admin</span></p>
+    <h1>access denied</h1>
+    <p class="lede">You signed in successfully, but your account is not currently allowed to use the admin console.</p>
+</div>
+
+<div class="card">
+    <h2>What to check</h2>
+    <p class="lede card-copy">Make sure your signed-in account is assigned to one of the configured admin Entra groups or app roles, and that those claims are included in the token for this app registration.</p>
+    <div class="actions">
+        <a href="/ui" class="button-primary">Back to public UI</a>
+        <a href="/auth/logout?returnUrl=/ui" class="button-secondary">Sign out</a>
+    </div>
+</div>
