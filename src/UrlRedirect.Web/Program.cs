@@ -14,6 +14,7 @@ using UrlRedirect.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.Configure<AdminAuthorizationOptions>(
     builder.Configuration.GetSection(AdminAuthorizationOptions.SectionName));
 builder.Services.AddSingleton<IAuthorizationHandler, AdminAccessHandler>();
