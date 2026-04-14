@@ -105,8 +105,7 @@ app.MapPost(
         var response = new CreateRedirectResponse(alias, shortUrl, targetUrl, (int)System.Net.HttpStatusCode.Found);
 
         return Results.Created($"/api/redirects/{alias}", response);
-    })
-    .RequireAuthorization(AdminPolicies.AdminOnly);
+    });
 
 app.MapGet(
     "/{alias}",

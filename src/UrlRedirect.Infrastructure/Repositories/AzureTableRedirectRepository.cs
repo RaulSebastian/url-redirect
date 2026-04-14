@@ -61,4 +61,42 @@ public sealed class AzureTableRedirectRepository : IRedirectRepository
             return null;
         }
     }
+
+    public async Task<IReadOnlyList<Redirect>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        var redirects = new List<Redirect>();
+
+        await foreach (var entity in _tableClient.QueryAsync<TableRedirectEntity>(
+                           entity => entity.PartitionKey == PartitionKey,
+                           cancellationToken: cancellationToken))
+        {
+            redirects.Add(new Redirect(
+                entity.RowKey,
+                entity.TargetUrl,
+                entity.CreatedUtc));
+        }
+
+        return redirects
+            .OrderByDescending(static redirect => redirect.CreatedUtc)
+            .ThenBy(static redirect => redirect.Alias, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    public async Task<bool> DeleteAsync(string alias, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _tableClient.DeleteEntityAsync(
+                PartitionKey,
+                alias,
+                ETag.All,
+                cancellationToken);
+
+            return true;
+        }
+        catch (RequestFailedException exception) when (exception.Status == 404)
+        {
+            return false;
+        }
+    }
 }

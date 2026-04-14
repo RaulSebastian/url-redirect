@@ -7,43 +7,55 @@
 <div class="intro">
     <p class="eyebrow">RedirectApp <span class="version-badge">admin</span></p>
     <h1>admin console</h1>
-    <p class="lede">Signed in as <strong>@Model.DisplayName</strong>. Create and manage redirects from the protected workspace.</p>
+    <p class="lede">Signed in as <strong>@Model.DisplayName</strong>. Review every redirect and remove entries when needed.</p>
 </div>
 
 <div class="card">
-    <h2>New redirect</h2>
-
-    <form id="redirect-form" novalidate>
-        <div id="validation-summary" class="status-banner status-error" hidden></div>
-
-        <div class="field">
-            <label for="alias">Custom alias</label>
-            <input id="alias" name="alias" autocomplete="off" placeholder="summer-sale"
-                   pattern="^[a-z0-9][a-z0-9-_]{2,39}$" required />
-            <span id="alias-error" class="field-error"></span>
-            <small>3-40 characters: letters, digits, hyphens, underscores.</small>
-        </div>
-
-        <div class="field">
-            <label for="target-url">Target URL</label>
-            <input id="target-url" name="targetUrl" type="url" autocomplete="off"
-                   placeholder="https://www.amazon.com/campaign?article=2454325" required />
-            <span id="target-url-error" class="field-error"></span>
-            <small>Must be a valid absolute URL.</small>
-        </div>
-
-        <div class="actions">
-            <button type="submit" id="submit-button" class="button-primary">Create redirect</button>
-            <a href="/auth/logout?returnUrl=/ui" class="button-secondary">Sign out</a>
-        </div>
-    </form>
-
-    <div id="result-card" class="status-banner status-success result-success" aria-live="polite" hidden>
-        <p class="result-label">Redirect created</p>
-        <a id="result-url" href="#" class="result-url"></a>
+    <div class="actions admin-actions">
+        <a href="/ui" class="button-secondary">Open public UI</a>
+        <a href="/auth/logout?returnUrl=/ui" class="button-secondary">Sign out</a>
     </div>
-</div>
 
-@section Scripts {
-    <script src="/ui/assets/site.js" asp-append-version="true"></script>
-}
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="status-banner status-success result-success">@Model.StatusMessage</div>
+    }
+
+    @if (Model.Redirects.Count == 0)
+    {
+        <p class="lede card-copy">No redirects have been created yet.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="redirect-table">
+                <thead>
+                <tr>
+                    <th scope="col">Alias</th>
+                    <th scope="col">Short URL</th>
+                    <th scope="col">Target URL</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var redirect in Model.Redirects)
+                {
+                    <tr>
+                        <td><code>@redirect.Alias</code></td>
+                        <td><a href="@redirect.ShortUrl" target="_blank" rel="noopener">@redirect.ShortUrl</a></td>
+                        <td><a href="@redirect.TargetUrl" target="_blank" rel="noopener">@redirect.TargetUrl</a></td>
+                        <td>@redirect.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <form method="post" asp-page-handler="Delete" class="inline-form">
+                                <input type="hidden" name="alias" value="@redirect.Alias" />
+                                <button type="submit" class="button-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

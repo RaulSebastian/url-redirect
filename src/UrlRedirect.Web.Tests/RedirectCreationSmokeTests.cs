@@ -41,10 +41,14 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
 
         var response = await client.GetAsync("/ui");
         var html = await response.Content.ReadAsStringAsync();
+        var scriptResponse = await client.GetAsync("/ui/assets/site.js");
+        var script = await scriptResponse.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Protected admin workspace", html);
+        Assert.Equal(HttpStatusCode.OK, scriptResponse.StatusCode);
+        Assert.Contains("Create redirect", html);
         Assert.Contains("/admin", html);
+        Assert.Contains("/api/redirects", script);
     }
 
     [Fact]
@@ -64,7 +68,12 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
     [Fact]
     public async Task AdminPage_LoadsForAuthenticatedAdmin()
     {
-        using var factory = _factory.WithAuthenticatedAdmin();
+        using var factory = _factory.WithAuthenticatedAdmin().WithServices(services =>
+        {
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository(
+                new Redirect("summer-sale", "https://example.com/campaign", DateTime.UtcNow)));
+        });
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/admin");
@@ -72,21 +81,22 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("admin console", html);
-        Assert.Contains("Create redirect", html);
+        Assert.Contains("summer-sale", html);
+        Assert.Contains("Delete", html);
     }
 
     [Fact]
-    public async Task CreateRedirect_RequiresAuthentication()
+    public async Task CreateRedirect_AllowsAnonymousUsers()
     {
-        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        using var factory = _factory.WithServices(services =>
         {
-            AllowAutoRedirect = false
+            services.RemoveAll<IRedirectRepository>();
+            services.AddSingleton<IRedirectRepository>(new CreateTestRepository());
         });
+        using var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/redirects", new { alias = "summer-sale", targetUrl = "https://example.com/campaign" });
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.Contains("login.microsoftonline.com", response.Headers.Location?.ToString());
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
     [Fact]
@@ -176,6 +186,20 @@ public sealed class RedirectCreationSmokeTests : IClassFixture<RedirectApplicati
         {
             _redirects.TryGetValue(alias, out var redirect);
             return Task.FromResult(redirect);
+        }
+
+        public Task<IReadOnlyList<Redirect>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<Redirect>>(
+                _redirects.Values
+                    .OrderByDescending(static redirect => redirect.CreatedUtc)
+                    .ThenBy(static redirect => redirect.Alias, StringComparer.OrdinalIgnoreCase)
+                    .ToArray());
+        }
+
+        public Task<bool> DeleteAsync(string alias, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_redirects.Remove(alias));
         }
     }
 }

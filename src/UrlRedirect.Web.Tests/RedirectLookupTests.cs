@@ -86,5 +86,19 @@ public sealed class RedirectLookupTests : IClassFixture<RedirectApplicationFacto
             _redirects.TryGetValue(alias, out var redirect);
             return Task.FromResult(redirect);
         }
+
+        public Task<IReadOnlyList<Redirect>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<Redirect>>(
+                _redirects.Values
+                    .OrderByDescending(static redirect => redirect.CreatedUtc)
+                    .ThenBy(static redirect => redirect.Alias, StringComparer.OrdinalIgnoreCase)
+                    .ToArray());
+        }
+
+        public Task<bool> DeleteAsync(string alias, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_redirects.Remove(alias));
+        }
     }
 }
